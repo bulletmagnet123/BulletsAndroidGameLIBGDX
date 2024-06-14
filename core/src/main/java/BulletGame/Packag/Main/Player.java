@@ -81,8 +81,9 @@ public class Player {
 
     public void render(SpriteBatch batch) {
         TextureRegion currentFrame = IdleAnimation.getKeyFrame(stateTime, true);
-        batch.draw(currentFrame, 50, 50);
+        batch.draw(currentFrame, 250, 250, 300, 300);
         System.out.println("Player Position: " + position.x + ", " + position.y);
+
 
     }
 

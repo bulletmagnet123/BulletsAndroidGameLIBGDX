@@ -20,6 +20,7 @@ public class FirstScreen implements Screen {
     ShapeRenderer shapeRenderer;
     Vector3 pos;
     private static final int FRAME_COLS = 4, FRAME_ROWS = 1;
+    float scaleFactor = 2f;
 
     Animation<TextureRegion> IdleAnimation;
     Texture walkSheet;
@@ -42,6 +43,9 @@ public class FirstScreen implements Screen {
 
         stateTime = 0f;
 
+
+
+
     }
 
     @Override
@@ -54,6 +58,8 @@ public class FirstScreen implements Screen {
         camera.update();
         player.update(delta);
         player.render(batch);
+
+
         if (Gdx.input.isTouched()) {
             float x = Gdx.input.getX();
             float y = Gdx.graphics.getHeight() - Gdx.input.getY();
