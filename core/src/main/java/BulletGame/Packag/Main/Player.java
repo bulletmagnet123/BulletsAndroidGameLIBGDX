@@ -99,6 +99,7 @@ public class Player {
             position.y += movementDirection.y * deltaTime;
             System.out.println("Player Position: " + position.x + ", " + position.y);
 
+
     }
     public float getPositionX() {
         return position.x;

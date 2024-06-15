@@ -1,15 +1,26 @@
 package BulletGame.Packag.Main;
 
+
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 /** First screen of the application. Displayed after the application is created. */
 public class FirstScreen implements Screen {
@@ -21,6 +32,14 @@ public class FirstScreen implements Screen {
     Vector3 pos;
     private static final int FRAME_COLS = 4, FRAME_ROWS = 1;
     float scaleFactor = 2f;
+    public TextButton left, right, up, down;
+    public Label controlls;
+    Stage stage;
+
+
+    Skin skin = new Skin(Gdx.files.internal("ui/uiskin.json"), new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas")));;
+    public TextButton.TextButtonStyle buttonStyle;
+
 
     Animation<TextureRegion> IdleAnimation;
     Texture walkSheet;
@@ -33,6 +52,20 @@ public class FirstScreen implements Screen {
     public void show() {
         batch = new SpriteBatch();
 
+
+        stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
+        Gdx.input.setInputProcessor(stage);
+
+        Table table = new Table();
+        table.setFillParent(true);
+        stage.addActor(table);
+        Skin skin = new Skin(Gdx.files.internal("ui/uiskin.json"), new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas")));
+
+
+
+
+
+
         shapeRenderer = new ShapeRenderer();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -42,6 +75,31 @@ public class FirstScreen implements Screen {
 
 
         stateTime = 0f;
+
+
+        left = new TextButton("Left",skin,"default");
+        right = new TextButton("Right",skin,"default");
+        up = new TextButton("Up",skin,"default");
+        down = new TextButton("Down",skin,"default");
+
+
+        controlls = new Label("CONTROLS", new Label.LabelStyle(new BitmapFont(), Color.WHITE));
+
+
+        table.add(left).width(100).height(100);
+        table.add(right).width(100).height(100);
+        table.row();
+        table.add(up).width(100).height(100);
+        table.add(down).width(100).height(100);
+
+        /*stage.addActor(controlls);
+        stage.addActor(left);
+        stage.addActor(right);
+        stage.addActor(up);
+        stage.addActor(down);*/
+        stage.addActor(table);
+
+
 
 
 
@@ -58,6 +116,12 @@ public class FirstScreen implements Screen {
         camera.update();
         player.update(delta);
         player.render(batch);
+        stage.act();
+        stage.draw();
+
+
+
+
 
 
         if (Gdx.input.isTouched()) {
@@ -97,6 +161,6 @@ public class FirstScreen implements Screen {
 
     @Override
     public void dispose() {
-        // Destroy screen's assets here.
+        skin.dispose();
     }
 }
