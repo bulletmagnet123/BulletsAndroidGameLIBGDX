@@ -1,6 +1,8 @@
 
-package Core.Main;
+package BulletGame.Packag.Main;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
@@ -9,7 +11,11 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
-import static Core.Main.Player.State.*;
+import static BulletGame.Packag.Main.Player.State.ATTACK;
+import static BulletGame.Packag.Main.Player.State.IDLE;
+import static BulletGame.Packag.Main.Player.State.RUN;
+
+import javax.swing.JComboBox;
 
 public class Player {
     Texture KnightSheet;
@@ -23,11 +29,12 @@ public class Player {
         DEATH
     }
 
+
     public State state;
-    public float MOVEMENT_SPEED = 5.0f;
+    public float MOVEMENT_SPEED = 25.0f;
     public float stateTime;
-    private State renderState = IDLE;
-    private float renderStateTime;
+    public State renderState = IDLE;
+    public float renderStateTime;
     public final Vector2 position = new Vector2();
     public final Vector2 movementDirection = new Vector2();
 
@@ -80,9 +87,10 @@ public class Player {
 
 
     public void render(SpriteBatch batch) {
-        TextureRegion currentFrame = IdleAnimation.getKeyFrame(stateTime, true);
-        batch.draw(currentFrame, 250, 250, 300, 300);
         System.out.println("Player Position: " + position.x + ", " + position.y);
+        TextureRegion currentFrame = IdleAnimation.getKeyFrame(stateTime, true);
+        batch.draw(currentFrame,Player.this.position.x, Player.this.position.y , 300, 300);
+
 
 
     }
@@ -97,9 +105,8 @@ public class Player {
             }
             position.x += movementDirection.x * deltaTime;
             position.y += movementDirection.y * deltaTime;
+
             System.out.println("Player Position: " + position.x + ", " + position.y);
-
-
     }
     public float getPositionX() {
         return position.x;
@@ -110,8 +117,8 @@ public class Player {
     private void setMovement(float x, float y){
         movementDirection.set(x, y);
         if (state == RUN && x == 0 && y == 0){
-            changeState(State.IDLE);
-        } else if (state == State.IDLE && (x != 0 || y != 0)){
+            changeState(IDLE);
+        } else if (state == IDLE && (x != 0 || y != 0)){
             changeState(RUN);
         }
     }
@@ -146,35 +153,34 @@ public class Player {
     }
     public void StopAttack(){
         changeState(IDLE);
-
     }
 
     public void moveLeft() {
-        movementDirection.x =  - MOVEMENT_SPEED * MOVEMENT_SPEED;
-
+        System.out.println("Position before: " + position);
+        position.x -= MOVEMENT_SPEED;
         changeState(RUN);
+        System.out.println("Position after: " + position);
     }
 
     public void moveRight() {
-        movementDirection.x = MOVEMENT_SPEED * MOVEMENT_SPEED;
-
-
+        System.out.println("Position before: " + position);
+        position.x += MOVEMENT_SPEED;
         changeState(RUN);
+        System.out.println("Position after: " + position);
     }
 
     public void moveUp() {
-        movementDirection.y = MOVEMENT_SPEED * MOVEMENT_SPEED;
-
-
-
+        System.out.println("Position before: " + position);
+        position.y += MOVEMENT_SPEED;
         changeState(RUN);
+        System.out.println("Position after: " + position);
     }
 
     public void moveDown() {
-        movementDirection.y = -MOVEMENT_SPEED * MOVEMENT_SPEED;
-
-
+        System.out.println("Position before: " + position);
+        position.y -= MOVEMENT_SPEED;
         changeState(RUN);
+        System.out.println("Position after: " + position);
     }
 
     public void stopMovingX() {

@@ -1,8 +1,6 @@
 package BulletGame.Packag.Main;
-
-
-
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -14,11 +12,15 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.EventListener;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
@@ -46,7 +48,7 @@ public class FirstScreen implements Screen {
 
     float stateTime;
 
-    Core.Main.Player player = new Core.Main.Player("Knight");
+    Player player = new Player("Knight");
 
     @Override
     public void show() {
@@ -81,6 +83,39 @@ public class FirstScreen implements Screen {
         right = new TextButton("Right",skin,"default");
         up = new TextButton("Up",skin,"default");
         down = new TextButton("Down",skin,"default");
+        left.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                player.moveLeft();
+                Gdx.app.log("Clicked", "Left");
+
+            }
+        });
+        right.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                player.moveRight();
+                Gdx.app.log("Clicked", "Right");
+
+            }
+        });
+        up.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                player.moveUp();
+                Gdx.app.log("Clicked", "UP");
+
+            }
+        });
+        down.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                player.moveDown();
+                Gdx.app.log("Clicked", "Down");
+
+            }
+        });
+        Gdx.input.setInputProcessor(stage);
 
 
         controlls = new Label("CONTROLS", new Label.LabelStyle(new BitmapFont(), Color.WHITE));
@@ -114,30 +149,44 @@ public class FirstScreen implements Screen {
         Gdx.gl.glClearColor(0, 0, 0, 0);
         Gdx.gl.glClear(Gdx.gl20.GL_COLOR_BUFFER_BIT);
         camera.update();
-        player.update(delta);
-        player.render(batch);
-        stage.act();
+
+        stage.act(Gdx.graphics.getDeltaTime());
         stage.draw();
 
+        player.render(batch);
+        player.update(delta);
 
-
-
-
-
-        if (Gdx.input.isTouched()) {
-            float x = Gdx.input.getX();
-            float y = Gdx.graphics.getHeight() - Gdx.input.getY();
-            System.out.println("x: " + x + " y: " + y);
-            pos.set(x, y, 0);
-        }
         batch.end();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.RED);
         shapeRenderer.circle(pos.x, pos.y, 20);
         shapeRenderer.end();
 
+    }
+
+
+    public void act(float delta) {
+        act(delta);
+
+        if(Gdx.input.isKeyPressed(Input.Keys.W)){
+
+        }
+
+        if(Gdx.input.isKeyPressed(Input.Keys.S)){
+
+        }
+
+        if(Gdx.input.isKeyPressed(Input.Keys.A)){
+
+        }
+
+        if(Gdx.input.isKeyPressed(Input.Keys.D)){
+
+        }
 
     }
+
+
 
     @Override
     public void resize(int width, int height) {
