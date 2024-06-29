@@ -11,10 +11,11 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.EventListener;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -22,7 +23,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+
+
 
 /** First screen of the application. Displayed after the application is created. */
 public class FirstScreen implements Screen {
@@ -37,7 +39,8 @@ public class FirstScreen implements Screen {
     public TextButton left, right, up, down;
     public Label controlls;
     Stage stage;
-
+    World world;
+    Box2DDebugRenderer debugRenderer;
 
     Skin skin = new Skin(Gdx.files.internal("ui/uiskin.json"), new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas")));;
     public TextButton.TextButtonStyle buttonStyle;
@@ -54,7 +57,6 @@ public class FirstScreen implements Screen {
     public void show() {
         batch = new SpriteBatch();
 
-
         stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
         Gdx.input.setInputProcessor(stage);
 
@@ -62,11 +64,6 @@ public class FirstScreen implements Screen {
         table.setFillParent(true);
         stage.addActor(table);
         Skin skin = new Skin(Gdx.files.internal("ui/uiskin.json"), new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas")));
-
-
-
-
-
 
         shapeRenderer = new ShapeRenderer();
         camera = new OrthographicCamera();
@@ -136,32 +133,41 @@ public class FirstScreen implements Screen {
 
 
 
-
-
-
     }
 
     @Override
     public void render(float delta) {
         // Draw your screen here. "delta" is the time since last render in seconds.
         batch.begin();
+        World world = new World(new Vector2(0, 0), false);
+        Box2DDebugRenderer debugRenderer = new Box2DDebugRenderer();
+
         stateTime += Gdx.graphics.getDeltaTime();
         Gdx.gl.glClearColor(0, 0, 0, 0);
         Gdx.gl.glClear(Gdx.gl20.GL_COLOR_BUFFER_BIT);
         camera.update();
+        camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        batch.setProjectionMatrix(camera.combined);
+        camera.viewportWidth = Gdx.graphics.getWidth();
+        camera.viewportHeight = Gdx.graphics.getHeight();
+        world.step(1/60f, 6, 2);
+        BodyHelperService.createbody(250, 250, 100, 100, false, world);
+
+
+        debugRenderer.render(world, camera.combined);
+
 
         stage.act(Gdx.graphics.getDeltaTime());
         stage.draw();
-
         player.render(batch);
         player.update(delta);
+        camera.position.set(pos.x, pos.y, 0);
 
         batch.end();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.RED);
         shapeRenderer.circle(pos.x, pos.y, 20);
         shapeRenderer.end();
-
     }
 
 
