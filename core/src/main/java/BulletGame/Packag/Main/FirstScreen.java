@@ -2,7 +2,9 @@ package BulletGame.Packag.Main;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
@@ -23,31 +25,32 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.aliasifkhan.hackLights.HackLight;
+import com.aliasifkhan.hackLights.HackLightEngine;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 
 
 /** First screen of the application. Displayed after the application is created. */
 public class FirstScreen implements Screen {
     SpriteBatch batch;
-    Texture porn;
-    Texture KnightSheet;
     private OrthographicCamera camera;
     ShapeRenderer shapeRenderer;
     Vector3 pos;
-    private static final int FRAME_COLS = 4, FRAME_ROWS = 1;
-    float scaleFactor = 2f;
-    public TextButton left, right, up, down;
-    public Label controlls;
     Stage stage;
-    World world;
     Box2DDebugRenderer debugRenderer;
+    private HackLight fogLight, libgdxLight;
+    private HackLightEngine lightEngine;
+    public Viewport gameViewport;
+    private Controller controller;
+    public static final float PPM = 100;
+    Viewport viewport;
 
-    Skin skin = new Skin(Gdx.files.internal("ui/uiskin.json"), new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas")));;
+
+    Skin skin = new Skin(Gdx.files.internal("ui/uiskin.json"), new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas")));
     public TextButton.TextButtonStyle buttonStyle;
-
-
-    Animation<TextureRegion> IdleAnimation;
-    Texture walkSheet;
 
     float stateTime;
 
@@ -56,7 +59,6 @@ public class FirstScreen implements Screen {
     @Override
     public void show() {
         batch = new SpriteBatch();
-
         stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
         Gdx.input.setInputProcessor(stage);
 
@@ -66,92 +68,73 @@ public class FirstScreen implements Screen {
         Skin skin = new Skin(Gdx.files.internal("ui/uiskin.json"), new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas")));
 
         shapeRenderer = new ShapeRenderer();
+        viewport = new FitViewport(Gdx.graphics.getWidth()/ PPM, Gdx.graphics.getHeight() / PPM, camera);
         camera = new OrthographicCamera();
-        camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        pos = new Vector3( Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 2, 0);
+        camera.setToOrtho(false, 800, 450);
+        pos = new Vector3(viewport.getScreenWidth(), viewport.getScreenHeight(), 0);
 
         player.getReady(250, 250);
+
+        controller = new Controller(stage);
+
 
 
         stateTime = 0f;
 
 
-        left = new TextButton("Left",skin,"default");
-        right = new TextButton("Right",skin,"default");
-        up = new TextButton("Up",skin,"default");
-        down = new TextButton("Down",skin,"default");
-        left.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                player.moveLeft();
-                Gdx.app.log("Clicked", "Left");
 
-            }
-        });
-        right.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                player.moveRight();
-                Gdx.app.log("Clicked", "Right");
+        TextureAtlas lightsAtlas = new TextureAtlas(Gdx.files.internal("lights.atlas"));
+        TextureRegion fogLightRegion = lightsAtlas.findRegion("light1");
 
-            }
-        });
-        up.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                player.moveUp();
-                Gdx.app.log("Clicked", "UP");
-
-            }
-        });
-        down.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                player.moveDown();
-                Gdx.app.log("Clicked", "Down");
-
-            }
-        });
-        Gdx.input.setInputProcessor(stage);
+        lightEngine = new HackLightEngine();
+        lightEngine.addLight(this.fogLight = new HackLight(fogLightRegion, 1, 1, 1, 1, 5f));
 
 
-        controlls = new Label("CONTROLS", new Label.LabelStyle(new BitmapFont(), Color.WHITE));
 
 
-        table.add(left).width(100).height(100);
-        table.add(right).width(100).height(100);
-        table.row();
-        table.add(up).width(100).height(100);
-        table.add(down).width(100).height(100);
 
-        /*stage.addActor(controlls);
-        stage.addActor(left);
-        stage.addActor(right);
-        stage.addActor(up);
-        stage.addActor(down);*/
-        stage.addActor(table);
+    }
+    public void handleInput(){
+        if(controller.isRightPressed())
+            player.moveRight();
+        else if (controller.isLeftPressed())
+            player.moveLeft();
+        else if (controller.isDownPressed())
+            player.moveDown();
+        else if (controller.isUpPressed())
+            player.moveUp();
+        else {
+            player.stop();
+        }
+    }
 
+    public void update(float dt){
+        handleInput();
 
 
     }
 
     @Override
     public void render(float delta) {
-        // Draw your screen here. "delta" is the time since last render in seconds.
+        //Vector2 vec = new Vector2(Gdx.input.getX(), Gdx.input.getY());
+        //gameViewport.unproject(vec);
+
         batch.begin();
         World world = new World(new Vector2(0, 0), false);
         Box2DDebugRenderer debugRenderer = new Box2DDebugRenderer();
 
+
         stateTime += Gdx.graphics.getDeltaTime();
         Gdx.gl.glClearColor(0, 0, 0, 0);
         Gdx.gl.glClear(Gdx.gl20.GL_COLOR_BUFFER_BIT);
+        camera.setToOrtho(false, 800, 450);
         camera.update();
-        camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         batch.setProjectionMatrix(camera.combined);
-        camera.viewportWidth = Gdx.graphics.getWidth();
-        camera.viewportHeight = Gdx.graphics.getHeight();
+        camera.viewportWidth = 800;
+        camera.viewportHeight = 450;
         world.step(1/60f, 6, 2);
         BodyHelperService.createbody(250, 250, 100, 100, false, world);
+        fogLight.setOriginBasedPosition(player.getPositionX(), player.getPositionY());
 
 
         debugRenderer.render(world, camera.combined);
@@ -159,9 +142,18 @@ public class FirstScreen implements Screen {
 
         stage.act(Gdx.graphics.getDeltaTime());
         stage.draw();
+        controller.setPosition(100, 100);
+        controller.draw();
+        update(delta);
         player.render(batch);
         player.update(delta);
         camera.position.set(pos.x, pos.y, 0);
+
+
+        //lighting code
+        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
+        fogLight.draw(batch);
+        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
         batch.end();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -194,9 +186,11 @@ public class FirstScreen implements Screen {
 
 
 
+
+
     @Override
     public void resize(int width, int height) {
-        // Resize your screen here. The parameters represent the new window size.
+
     }
 
     @Override

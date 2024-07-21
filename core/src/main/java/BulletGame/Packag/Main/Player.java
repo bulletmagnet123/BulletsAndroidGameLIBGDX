@@ -22,6 +22,12 @@ public class Player {
     private static final int FRAME_COLS = 4, FRAME_ROWS = 1;
     private String name;
     private Color color;
+
+    public void stop() {
+        movementDirection.set(0, 0);
+        changeState(IDLE);
+    }
+
     public enum State {
         IDLE,
         RUN,
