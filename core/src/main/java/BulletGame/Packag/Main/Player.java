@@ -19,14 +19,10 @@ import javax.swing.JComboBox;
 
 public class Player {
     Texture KnightSheet;
-    private static final int FRAME_COLS = 4, FRAME_ROWS = 1;
+    private static final int FRAME_COLS_IDLE = 4, FRAME_ROWS_IDLE = 1;
+    private static final int FRAME_COLS_RUN = 8, FRAME_ROWS_RUN = 2;
     private String name;
     private Color color;
-
-    public void stop() {
-        movementDirection.set(0, 0);
-        changeState(IDLE);
-    }
 
     public enum State {
         IDLE,
@@ -41,7 +37,7 @@ public class Player {
     public State state;
     public float MOVEMENT_SPEED = 25.0f;
     public float stateTime;
-    public State renderState = IDLE;
+    public State renderState = RUN;
     public float renderStateTime;
     public final Vector2 position = new Vector2();
     public final Vector2 movementDirection = new Vector2();
@@ -54,11 +50,12 @@ public class Player {
 
     public Player(String name) {
         this.name = name;
-        changeState(IDLE);
         KnightSheet = new Texture("com/sprites/knight.png");
+        state = IDLE;
     }
 
     public void getAnimation(){
+
 
     }
 
@@ -95,8 +92,8 @@ public class Player {
 
 
     public void render(SpriteBatch batch) {
+        TextureRegion currentFrame = State();
         System.out.println("Player Position: " + position.x + ", " + position.y);
-        TextureRegion currentFrame = IdleAnimation.getKeyFrame(stateTime, true);
         batch.draw(currentFrame,Player.this.position.x, Player.this.position.y , 300, 300);
 
 
@@ -122,12 +119,12 @@ public class Player {
     public float getPositionY() {
         return position.y;
     }
-    private void setMovement(float x, float y){
+    void setMovement(float x, float y){
         movementDirection.set(x, y);
-        if (state == RUN && x == 0 && y == 0){
-            changeState(IDLE);
-        } else if (state == IDLE && (x != 0 || y != 0)){
+        if (state == IDLE && (x != 0 || y != 0)){ // Change to RUN if moving from IDLE
             changeState(RUN);
+        } else if (state == RUN && x == 0 && y == 0){ // Change to IDLE if stopping from RUN
+            changeState(IDLE);
         }
     }
     public void getReady(float positionX, float positionY){
@@ -136,13 +133,23 @@ public class Player {
         position.set(positionX, positionY);
         movementDirection.set(0, 0);
         TextureRegion[][] tmp = TextureRegion.split(KnightSheet, 32, 32);
-        TextureRegion[] KnightIdleFrames = new TextureRegion[FRAME_COLS];
-        int index = 0;
-        for (int j = 0; j < FRAME_COLS; j++) {
-            KnightIdleFrames[index++] = tmp[0][j];
+        TextureRegion[] KnightIdleFrames = new TextureRegion[FRAME_COLS_IDLE];
+        int indexIDLE = 0;
+        for (int j = 0; j < FRAME_COLS_IDLE; j++) {
+            KnightIdleFrames[indexIDLE++] = tmp[0][j];
         }
         IdleAnimation = new Animation<TextureRegion>(0.25f, KnightIdleFrames);
         stateTime = 0f;
+        ;
+        TextureRegion[] KnightRunFrames = new TextureRegion[16];  // 16 frames total (8 from each
+        int indexRUN = 0;
+        for (int j = 0; j < 8; j++) { // 4 frames from the third row
+            KnightRunFrames[indexRUN++] = tmp[2][j]; // Row index 2 for the third row
+        }
+        for (int j = 0; j < 8; j++) { // 4 frames from the fourth row
+            KnightRunFrames[indexRUN++] = tmp[3][j]; // Row index 3 for the fourth row
+        }
+        Runanimation = new Animation<TextureRegion>(0.1f, KnightRunFrames);
 
 
     }
@@ -162,32 +169,37 @@ public class Player {
     public void StopAttack(){
         changeState(IDLE);
     }
+    public void stop() {
+        movementDirection.set(0, 0);
+        setMovement(0, 0); // Call setMovement to trigger state change
+        //changeState(IDLE); // You can remove this line now
+    }
 
     public void moveLeft() {
         System.out.println("Position before: " + position);
         position.x -= MOVEMENT_SPEED;
-        changeState(RUN);
+        changeState(IDLE);
         System.out.println("Position after: " + position);
     }
 
     public void moveRight() {
         System.out.println("Position before: " + position);
         position.x += MOVEMENT_SPEED;
-        changeState(RUN);
+        changeState(IDLE);
         System.out.println("Position after: " + position);
     }
 
     public void moveUp() {
         System.out.println("Position before: " + position);
         position.y += MOVEMENT_SPEED;
-        changeState(RUN);
+        changeState(IDLE);
         System.out.println("Position after: " + position);
     }
 
     public void moveDown() {
         System.out.println("Position before: " + position);
         position.y -= MOVEMENT_SPEED;
-        changeState(RUN);
+        changeState(IDLE);
         System.out.println("Position after: " + position);
     }
 

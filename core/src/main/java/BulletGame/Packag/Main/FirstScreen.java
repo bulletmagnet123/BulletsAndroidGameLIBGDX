@@ -65,7 +65,7 @@ public class FirstScreen implements Screen {
         Table table = new Table();
         table.setFillParent(true);
         stage.addActor(table);
-        Skin skin = new Skin(Gdx.files.internal("ui/uiskin.json"), new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas")));
+
 
         shapeRenderer = new ShapeRenderer();
         viewport = new FitViewport(Gdx.graphics.getWidth()/ PPM, Gdx.graphics.getHeight() / PPM, camera);
@@ -84,10 +84,10 @@ public class FirstScreen implements Screen {
 
 
         TextureAtlas lightsAtlas = new TextureAtlas(Gdx.files.internal("lights.atlas"));
-        TextureRegion fogLightRegion = lightsAtlas.findRegion("light1");
+        TextureRegion libgdxLight = lightsAtlas.findRegion("light2");
 
         lightEngine = new HackLightEngine();
-        lightEngine.addLight(this.fogLight = new HackLight(fogLightRegion, 1, 1, 1, 1, 5f));
+        lightEngine.addLight(this.libgdxLight = new HackLight(libgdxLight, 1, 1, 1, 1, 5f));
 
 
 
@@ -95,14 +95,14 @@ public class FirstScreen implements Screen {
 
     }
     public void handleInput(){
-        if(controller.isRightPressed())
-            player.moveRight();
+        if (controller.isRightPressed())
+            player.setMovement(player.MOVEMENT_SPEED, 0); // Move right
         else if (controller.isLeftPressed())
-            player.moveLeft();
+            player.setMovement(-player.MOVEMENT_SPEED, 0); // Move left
         else if (controller.isDownPressed())
-            player.moveDown();
+            player.setMovement(0, -player.MOVEMENT_SPEED); // Move down
         else if (controller.isUpPressed())
-            player.moveUp();
+            player.setMovement(0, player.MOVEMENT_SPEED); // Move up
         else {
             player.stop();
         }
@@ -110,15 +110,13 @@ public class FirstScreen implements Screen {
 
     public void update(float dt){
         handleInput();
-
-
     }
 
     @Override
     public void render(float delta) {
         //Vector2 vec = new Vector2(Gdx.input.getX(), Gdx.input.getY());
         //gameViewport.unproject(vec);
-
+        update(delta);
         batch.begin();
         World world = new World(new Vector2(0, 0), false);
         Box2DDebugRenderer debugRenderer = new Box2DDebugRenderer();
@@ -134,7 +132,10 @@ public class FirstScreen implements Screen {
         camera.viewportHeight = 450;
         world.step(1/60f, 6, 2);
         BodyHelperService.createbody(250, 250, 100, 100, false, world);
-        fogLight.setOriginBasedPosition(player.getPositionX(), player.getPositionY());
+
+
+
+
 
 
         debugRenderer.render(world, camera.combined);
@@ -144,21 +145,23 @@ public class FirstScreen implements Screen {
         stage.draw();
         controller.setPosition(100, 100);
         controller.draw();
-        update(delta);
+
+
+
+        camera.position.set(pos.x, pos.y, 0);
+        //lighting code
+
+
+
         player.render(batch);
         player.update(delta);
-        camera.position.set(pos.x, pos.y, 0);
-
-
-        //lighting code
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
-        fogLight.draw(batch);
-        batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        libgdxLight.setOriginBasedPosition(player.getPositionX(), player.getPositionY());
+        libgdxLight.draw(batch);
 
         batch.end();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(Color.RED);
-        shapeRenderer.circle(pos.x, pos.y, 20);
+        /*shapeRenderer.setColor(Color.RED);
+        shapeRenderer.circle(pos.x, pos.y, 20);*/
         shapeRenderer.end();
     }
 
