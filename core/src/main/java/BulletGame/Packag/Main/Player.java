@@ -21,7 +21,7 @@ public class Player {
 
     private Vector2 velocity = new Vector2();
     private final Vector2 position = new Vector2();
-    public float MOVEMENT_SPEED = 5.0f;
+    public float MOVEMENT_SPEED = 1.0f;
     private float stateTime = 0f;
 
     private Animation<TextureRegion> IdleAnimation, Runanimation, Attackanimation, DeathAnimation;
@@ -32,6 +32,7 @@ public class Player {
 
     public Rectangle player_rect;
     private TiledMap tiledMap;
+    private static final float GRAVITY = -9.8f;
 
     public enum State {
         IDLE, RUN, ATTACK, DEATH
@@ -43,7 +44,7 @@ public class Player {
         setupAnimations();
         state = State.IDLE;
         player_rect = new Rectangle();
-        player_rect.set(getPositionX(), getPositionY(), 32, 32);
+        player_rect.set(getPositionX(), getPositionY(), 16, 16);
         this.tiledMap = tiledMapHelper.getTiledMap();
 
     }
@@ -87,20 +88,48 @@ public class Player {
     }
 
 
+
     public void update(float deltaTime) {
         stateTime += deltaTime;
 
-        float oldX = position.x;
-        float oldY = position.y;
-        position.x += velocity.x * deltaTime;
-        position.y += velocity.y * deltaTime;
-
-        if (checkCollision()){
-
+        // Apply gravity (velocity decreases over time if not on the ground)
+        if (!isOnGround()) {
+            velocity.y += GRAVITY * deltaTime;
+        } else {
+            velocity.y = 0; // Stop falling if on the ground
         }
 
-        player_rect.setPosition(position.x, position.y);
+        // Save the old position
+        float oldX = position.x;
+        float oldY = position.y;
 
+        // Update X position
+        position.x += velocity.x * deltaTime;
+        player_rect.setX(position.x);
+
+        // Check for X-axis collisions (horizontal movement)
+        if (checkCollision()) {
+            position.x = oldX; // Revert to old X position if collision occurs
+            player_rect.setX(position.x);
+        }
+
+        // Update Y position (vertical movement)
+        position.y += velocity.y * deltaTime;
+        player_rect.setY(position.y);
+
+        // Check for Y-axis collisions (vertical movement)
+        if (checkCollision()) {
+            position.y = oldY; // Revert to old Y position if collision occurs
+            velocity.y = 0; // Stop falling
+            player_rect.setY(position.y);
+        }
+
+        // Update animation state based on movement
+        if (velocity.x != 0 || velocity.y != 0) {
+            changeState(State.RUN); // Running or falling
+        } else {
+            changeState(State.IDLE); // Idle when stationary
+        }
     }
 
     public TextureRegion getCurrentFrame() {
@@ -208,6 +237,18 @@ public class Player {
         }
         return false;
     }
+    private boolean isOnGround() {
+        // Define a small offset to check slightly below the player
+        float offsetY = -2; // Check 2 pixels below the player
+        float playerWidth = player_rect.width;
+        int tileWidth = tiledMap.getProperties().get("tilewidth", Integer.class);
+        int tileHeight = tiledMap.getProperties().get("tileheight", Integer.class);
+
+        // Check for collisions at both left and right corners of the player rectangle
+        return checkCollisionAt(position.x, position.y + offsetY, tileWidth, tileHeight) ||  // Check bottom-left corner
+            checkCollisionAt(position.x + playerWidth, position.y + offsetY, tileWidth, tileHeight);  // Check bottom-right corner
+    }
+
 
 }
 

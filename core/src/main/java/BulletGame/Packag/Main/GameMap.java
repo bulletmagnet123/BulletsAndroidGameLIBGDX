@@ -72,21 +72,35 @@ public class GameMap implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1); // Change alpha to 1 for full black screen
+        Gdx.gl.glClearColor(0, 0, 0, 1); // Full black screen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        camera.update();
-        orthogonalTiledMapRenderer.setView(camera);  // This is fine here or in update()
-        orthogonalTiledMapRenderer.render();
-        batch.begin();
-        stage.draw();
-        stage.act(delta);
-        handleInput();
-        player.render(batch);
-        player.update(delta);
+
+        delta = Gdx.graphics.getDeltaTime();  // Get delta time for smooth updates
+
+        // Update camera based on player's position
         camera.position.set(player.getPositionX(), player.getPositionY(), 0);
         camera.update();
+
+        // Render the tiled map
+        orthogonalTiledMapRenderer.setView(camera);
+        orthogonalTiledMapRenderer.render();
+
+        // Begin rendering
+        batch.begin();
+        stage.draw();
+        stage.act(delta); // Update stage
+
+        // Handle player input
+        handleInput();
+
+        // Update player state and render
+        player.update(delta);
+        player.render(batch);
+
         batch.end();
-        world.step(1 / 60f, 6, 2); // World step should be outside the render loop
+
+        // Step the physics world (Box2D)
+        world.step(1 / 60f, 6, 2);
     }
 
 
@@ -96,19 +110,14 @@ public class GameMap implements Screen {
             player.moveRight();
         } else if (controller.isLeftPressed()) {
             player.moveLeft();
-        }
-
-        if (controller.isUpPressed() ) {
+        } else if (controller.isUpPressed()) {
             player.moveUp();
         } else if (controller.isDownPressed()) {
             player.moveDown();
         }
 
-        if (!controller.isUpPressed() && !controller.isDownPressed() &&
-            !controller.isLeftPressed() && !controller.isRightPressed()) {
-            player.stop();
-        }
     }
+
 
 
 
