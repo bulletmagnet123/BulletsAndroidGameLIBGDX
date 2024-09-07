@@ -55,15 +55,17 @@ public class GameMap implements Screen {
     @Override
     public void show() {
         batch = new SpriteBatch();
+        int tileHeight = tiledMapHelper.getTileHeight();
 
-        camera.setToOrtho(false, 350,350) ;
+        camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         controller = new Controller(stage);
         player = new Player("Knight", tiledMapHelper);
 
-        player.getReady(250, 700);
         controller.setPosition(75, 75);
 
+        player.position.set(250, 350);
+        player.getReady();
 
 
     }
@@ -72,35 +74,26 @@ public class GameMap implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1); // Full black screen
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        delta = Gdx.graphics.getDeltaTime();  // Get delta time for smooth updates
+        // Step the physics world
+        world.step(1 / 60f, 6, 2);
 
-        // Update camera based on player's position
-        camera.position.set(player.getPositionX(), player.getPositionY(), 0);
-        camera.update();
-
-        // Render the tiled map
         orthogonalTiledMapRenderer.setView(camera);
         orthogonalTiledMapRenderer.render();
 
-        // Begin rendering
         batch.begin();
         stage.draw();
-        stage.act(delta); // Update stage
+        stage.act(delta);
 
-        // Handle player input
         handleInput();
 
-        // Update player state and render
         player.update(delta);
         player.render(batch);
 
+        camera.update();
         batch.end();
-
-        // Step the physics world (Box2D)
-        world.step(1 / 60f, 6, 2);
     }
 
 

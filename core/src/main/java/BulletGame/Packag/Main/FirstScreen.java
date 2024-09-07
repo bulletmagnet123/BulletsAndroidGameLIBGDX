@@ -143,15 +143,7 @@ public class FirstScreen implements Screen {
         camera.viewportHeight = 450;
         world.step(1/60f, 6, 2);
         BodyHelperService.createbody(250, 250, 100, 100, false, world);
-
-
-
-
-
-
-
         debugRenderer.render(world, camera.combined);
-
 
         stage.act(Gdx.graphics.getDeltaTime());
         stage.draw();

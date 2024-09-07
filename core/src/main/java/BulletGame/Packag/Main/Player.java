@@ -20,7 +20,7 @@ public class Player {
     private TiledMapHelper tiledMapHelper;
 
     private Vector2 velocity = new Vector2();
-    private final Vector2 position = new Vector2();
+    final Vector2 position = new Vector2();
     public float MOVEMENT_SPEED = 1.0f;
     private float stateTime = 0f;
 
@@ -39,12 +39,13 @@ public class Player {
     }
 
     public Player(String name, TiledMapHelper tiledMapHelper) {
+
         this.tiledMapHelper = tiledMapHelper; // Correctly assign TiledMapHelper
         KnightSheet = new Texture("com/sprites/knight.png");
         setupAnimations();
         state = State.IDLE;
         player_rect = new Rectangle();
-        player_rect.set(getPositionX(), getPositionY(), 16, 16);
+        player_rect.set(position.x, position.y, 32, 32);
         this.tiledMap = tiledMapHelper.getTiledMap();
 
     }
@@ -71,8 +72,7 @@ public class Player {
         Runanimation = new Animation<TextureRegion>(0.1f, KnightRunFrames);
     }
 
-    public void getReady(float positionX, float positionY) {
-        position.set(positionX, positionY);
+    public void getReady() {
 
         changeState(IDLE);
 
@@ -82,14 +82,13 @@ public class Player {
 
     public void render(SpriteBatch batch) {
         TextureRegion currentFrame = getCurrentFrame();
-        player_rect.set(position.x, position.y, 64, 64); // Update player rectangle
-        batch.draw(currentFrame, position.x, position.y, player_rect.width, player_rect.height);
-
+        player_rect.set(position.x, position.y, 32, 32); // Update player rectangle
+        batch.draw(currentFrame, position.x, position.y, 32, 32);
     }
 
 
 
-    public void update(float deltaTime) {
+   /* public void update(float deltaTime) {
         stateTime += deltaTime;
 
         // Apply gravity (velocity decreases over time if not on the ground)
@@ -120,6 +119,42 @@ public class Player {
         // Check for Y-axis collisions (vertical movement)
         if (checkCollision()) {
             position.y = oldY; // Revert to old Y position if collision occurs
+            velocity.y = 0; // Stop falling
+            player_rect.setY(position.y);
+        }
+
+        // Update animation state based on movement
+        if (velocity.x != 0 || velocity.y != 0) {
+            changeState(State.RUN); // Running or falling
+        } else {
+            changeState(State.IDLE); // Idle when stationary
+        }
+    }*/
+
+    public void update(float deltaTime) {
+        stateTime += deltaTime;
+
+        // Apply gravity
+        velocity.y += GRAVITY * deltaTime;
+
+        // Save the old position
+        float oldX = position.x;
+        float oldY = position.y;
+
+        // Update X position
+        position.x += velocity.x * deltaTime;
+        player_rect.setX(position.x);
+
+        // Update Y position (vertical movement)
+        position.y += velocity.y * deltaTime;
+        player_rect.setY(position.y);
+
+        // Check for Y-axis collisions (vertical movement) ONLY BELOW
+        if (isOnGround()) {
+            // Calculate the correct Y position to be on top of the tile
+            int tileHeight = 8; // Assuming each tile is 16x16
+            position.y = ((int) (position.y / tileHeight)) * tileHeight + tileHeight;
+
             velocity.y = 0; // Stop falling
             player_rect.setY(position.y);
         }
@@ -205,8 +240,8 @@ public class Player {
     public boolean checkCollision() {
         if (tiledMap == null) return false;
 
-        int tileWidth = tiledMap.getProperties().get("tilewidth", Integer.class);
-        int tileHeight = tiledMap.getProperties().get("tileheight", Integer.class);
+        int tileWidth = 16;
+        int tileHeight = 16;
 
         // Check collisions in 4 corners of player rectangle
         boolean collision = checkCollisionAt(position.x, position.y, tileWidth, tileHeight) ||
@@ -238,15 +273,17 @@ public class Player {
         return false;
     }
     private boolean isOnGround() {
-        // Define a small offset to check slightly below the player
-        float offsetY = -2; // Check 2 pixels below the player
-        float playerWidth = player_rect.width;
-        int tileWidth = tiledMap.getProperties().get("tilewidth", Integer.class);
-        int tileHeight = tiledMap.getProperties().get("tileheight", Integer.class);
+        // Get the necessary tile and player data
+        int tileWidth = 16;
+        int tileHeight = 16;
 
-        // Check for collisions at both left and right corners of the player rectangle
-        return checkCollisionAt(position.x, position.y + offsetY, tileWidth, tileHeight) ||  // Check bottom-left corner
-            checkCollisionAt(position.x + playerWidth, position.y + offsetY, tileWidth, tileHeight);  // Check bottom-right corner
+        // Check just below the player's feet for collision
+        float playerBottomY = position.y + 8;  // A small offset below the player
+        float playerLeftX = position.x;
+        float playerRightX = position.x;
+
+        // Check bottom-left and bottom-right corners for ground collision
+        return checkCollisionAt(playerLeftX, playerBottomY, 16, 16);
     }
 
 
