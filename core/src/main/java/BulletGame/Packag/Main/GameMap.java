@@ -47,20 +47,19 @@ public class GameMap implements Screen {
         this.batch = new SpriteBatch();
         stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
         this.tiledMapHelper = new TiledMapHelper();
-        player = new Player("Knight", tiledMapHelper);
+
         this.orthogonalTiledMapRenderer = tiledMapHelper.setupMap();
         this.world = new World(new Vector2(0, 0), false);
-
-
     }
 
     @Override
     public void show() {
         batch = new SpriteBatch();
 
-        camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        camera.setToOrtho(false, 350,350) ;
 
         controller = new Controller(stage);
+        player = new Player("Knight", tiledMapHelper);
 
         player.getReady(250, 700);
         controller.setPosition(75, 75);
@@ -75,18 +74,17 @@ public class GameMap implements Screen {
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1); // Change alpha to 1 for full black screen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
         camera.update();
         orthogonalTiledMapRenderer.setView(camera);  // This is fine here or in update()
         orthogonalTiledMapRenderer.render();
-
         batch.begin();
-
-        player.render(batch);
-        handleInput();
         stage.draw();
         stage.act(delta);
+        handleInput();
+        player.render(batch);
         player.update(delta);
+        camera.position.set(player.getPositionX(), player.getPositionY(), 0);
+        camera.update();
         batch.end();
         world.step(1 / 60f, 6, 2); // World step should be outside the render loop
     }

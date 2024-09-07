@@ -11,11 +11,8 @@ import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
-import static BulletGame.Packag.Main.Player.State.ATTACK;
 import static BulletGame.Packag.Main.Player.State.IDLE;
 import static BulletGame.Packag.Main.Player.State.RUN;
-
-import java.awt.image.BufferedImage;
 
 
 public class Player {
@@ -24,15 +21,14 @@ public class Player {
 
     private Vector2 velocity = new Vector2();
     private final Vector2 position = new Vector2();
-
     public float MOVEMENT_SPEED = 5.0f;
     private float stateTime = 0f;
 
     private Animation<TextureRegion> IdleAnimation, Runanimation, Attackanimation, DeathAnimation;
     private State state = State.IDLE;
 
-    private static final int FRAME_COLS_IDLE = 4, FRAME_ROWS_IDLE = 1;
-    private static final int FRAME_COLS_RUN = 8, FRAME_ROWS_RUN = 2;
+    private static final int FRAME_COLS_IDLE = 4;
+
 
     public Rectangle player_rect;
     private TiledMap tiledMap;
@@ -83,31 +79,11 @@ public class Player {
     }
 
 
-    public void setTiledMapHelper(TiledMapHelper tiledMapHelper) {
-        this.tiledMapHelper = tiledMapHelper;
-    }
-
-    private TextureRegion getCurrentFrame() {
-
-        switch (state) {
-            case RUN:
-                return Runanimation.getKeyFrame(stateTime, true);
-            case ATTACK:
-                return Attackanimation.getKeyFrame(stateTime, false);
-            case DEATH:
-                return DeathAnimation.getKeyFrame(stateTime, false);
-            case IDLE:
-                return IdleAnimation.getKeyFrame(stateTime, true);
-            default:
-                return IdleAnimation.getKeyFrame(stateTime, true);
-        }
-    }
-
-
     public void render(SpriteBatch batch) {
-        TextureRegion currentFrame = getCurrentFrame(); // Get the current frame
-        player_rect.set(position.x, position.y, 32, 32); // Update player rectangle
-        batch.draw(getCurrentFrame(), position.x, position.y, player_rect.width, player_rect.height);
+        TextureRegion currentFrame = getCurrentFrame();
+        player_rect.set(position.x, position.y, 64, 64); // Update player rectangle
+        batch.draw(currentFrame, position.x, position.y, player_rect.width, player_rect.height);
+
     }
 
 
@@ -116,30 +92,30 @@ public class Player {
 
         float oldX = position.x;
         float oldY = position.y;
-
         position.x += velocity.x * deltaTime;
-        player_rect.setX(position.x);
+        position.y += velocity.y * deltaTime;
 
+        if (checkCollision()){
 
-        player_rect.setX(position.x);
-        if (checkCollision()) {
-            position.x = oldX;
-            player_rect.setX(position.x);
         }
 
-        position.y += velocity.y * deltaTime;
-        player_rect.setY(position.y);
+        player_rect.setPosition(position.x, position.y);
 
+    }
 
-
-        position.y += velocity.y * deltaTime;
-        player_rect.setY(position.y);
-        if (velocity.x != 0 || velocity.y != 0) { // Check both x and y velocity
-            changeState(RUN);
-        } else {
-            changeState(IDLE);
+    public TextureRegion getCurrentFrame() {
+        switch (state) {
+            case IDLE:
+                return IdleAnimation.getKeyFrame(stateTime, true);
+            case RUN:
+                return Runanimation.getKeyFrame(stateTime, true);
+            case ATTACK:
+                return Attackanimation.getKeyFrame(stateTime, false);
+            case DEATH:
+                return DeathAnimation.getKeyFrame(stateTime, false);
+            default:
+                return IdleAnimation.getKeyFrame(stateTime, true);
         }
-
     }
 
 
@@ -153,8 +129,10 @@ public class Player {
 
 
     private void changeState(State newState) {
-        state = newState;
-        stateTime = 0f;
+        if (state != newState) { // Only reset stateTime if the state changes
+            state = newState;
+            stateTime = 0f;
+        }
     }
 
 
@@ -168,24 +146,29 @@ public class Player {
     public void moveLeft() {
         System.out.println("Position before: " + position);
         position.x -= MOVEMENT_SPEED;
+        changeState(RUN);
         System.out.println("Position after: " + position);
     }
 
     public void moveRight() {
         System.out.println("Position before: " + position);
         position.x += MOVEMENT_SPEED;
+        changeState(RUN);
         System.out.println("Position after: " + position);
     }
 
     public void moveUp() {
         System.out.println("Position before: " + position);
+        changeState(RUN);
         position.y += MOVEMENT_SPEED;
+
         System.out.println("Position after: " + position);
     }
 
     public void moveDown() {
         System.out.println("Position before: " + position);
         position.y -= MOVEMENT_SPEED;
+        changeState(RUN);
         System.out.println("Position after: " + position);
     }
 
