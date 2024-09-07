@@ -1,137 +1,59 @@
-
 package BulletGame.Packag.Main;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
 import static BulletGame.Packag.Main.Player.State.ATTACK;
 import static BulletGame.Packag.Main.Player.State.IDLE;
 import static BulletGame.Packag.Main.Player.State.RUN;
 
-import javax.swing.JComboBox;
+import java.awt.image.BufferedImage;
+
 
 public class Player {
-    Texture KnightSheet;
+    private Texture KnightSheet;
+    private TiledMapHelper tiledMapHelper;
+
+    private Vector2 velocity = new Vector2();
+    private final Vector2 position = new Vector2();
+
+    public float MOVEMENT_SPEED = 5.0f;
+    private float stateTime = 0f;
+
+    private Animation<TextureRegion> IdleAnimation, Runanimation, Attackanimation, DeathAnimation;
+    private State state = State.IDLE;
+
     private static final int FRAME_COLS_IDLE = 4, FRAME_ROWS_IDLE = 1;
     private static final int FRAME_COLS_RUN = 8, FRAME_ROWS_RUN = 2;
-    private String name;
-    private Color color;
+
+    public Rectangle player_rect;
+    private TiledMap tiledMap;
 
     public enum State {
-        IDLE,
-        RUN,
-        ATTACK,
-        DEATH
+        IDLE, RUN, ATTACK, DEATH
     }
 
-
-
-
-    public State state;
-    public float MOVEMENT_SPEED = 25.0f;
-    public float stateTime;
-    public State renderState = RUN;
-    public float renderStateTime;
-    public final Vector2 position = new Vector2();
-    public final Vector2 movementDirection = new Vector2();
-
-    private Animation<TextureRegion> IdleAnimation;
-    private Animation<TextureRegion> Attackanimation;
-    private Animation<TextureRegion> Runanimation;
-    private Animation<TextureRegion> DeathAnimation;
-
-
-    public Player(String name) {
-        this.name = name;
+    public Player(String name, TiledMapHelper tiledMapHelper) {
+        this.tiledMapHelper = tiledMapHelper; // Correctly assign TiledMapHelper
         KnightSheet = new Texture("com/sprites/knight.png");
-        state = IDLE;
-    }
-
-    public void getAnimation(){
-
-
-    }
-
-    public TextureRegion State(){
-        TextureRegion currentFrame;
-        renderState = state;
-
-        switch (renderState) {
-            case IDLE:
-                currentFrame = IdleAnimation.getKeyFrame(stateTime, true);
-
-                break;
-            case RUN:
-                currentFrame = Runanimation.getKeyFrame(stateTime, true);
-
-                break;
-            case ATTACK:
-                currentFrame = Attackanimation.getKeyFrame(stateTime, false);
-
-                break;
-            case DEATH:
-                currentFrame = DeathAnimation.getKeyFrame(stateTime, false);
-
-                break;
-            default:
-                currentFrame = IdleAnimation.getKeyFrame(stateTime, true);
-
-        }
-        return currentFrame;
-    }
-
-
-
-
-
-    public void render(SpriteBatch batch) {
-        TextureRegion currentFrame = State();
-        System.out.println("Player Position: " + position.x + ", " + position.y);
-        batch.draw(currentFrame,Player.this.position.x, Player.this.position.y , 300, 300);
-
-
+        setupAnimations();
+        state = State.IDLE;
+        player_rect = new Rectangle();
+        player_rect.set(getPositionX(), getPositionY(), 32, 32);
+        this.tiledMap = tiledMapHelper.getTiledMap();
 
     }
 
-    public void update(float deltaTime) {
+    private void setupAnimations() {
 
-            stateTime += deltaTime;
-
-            if (deltaTime > 0){
-                renderState = state;
-                renderStateTime = stateTime;
-            }
-            position.x += movementDirection.x * deltaTime;
-            position.y += movementDirection.y * deltaTime;
-
-            System.out.println("Player Position: " + position.x + ", " + position.y);
-    }
-    public float getPositionX() {
-        return position.x;
-    }
-    public float getPositionY() {
-        return position.y;
-    }
-    void setMovement(float x, float y){
-        movementDirection.set(x, y);
-        if (state == IDLE && (x != 0 || y != 0)){ // Change to RUN if moving from IDLE
-            changeState(RUN);
-        } else if (state == RUN && x == 0 && y == 0){ // Change to IDLE if stopping from RUN
-            changeState(IDLE);
-        }
-    }
-    public void getReady(float positionX, float positionY){
-        //state = renderState = IDLE;
-        stateTime = renderStateTime = 0f;
-        position.set(positionX, positionY);
-        movementDirection.set(0, 0);
         TextureRegion[][] tmp = TextureRegion.split(KnightSheet, 32, 32);
         TextureRegion[] KnightIdleFrames = new TextureRegion[FRAME_COLS_IDLE];
         int indexIDLE = 0;
@@ -140,7 +62,7 @@ public class Player {
         }
         IdleAnimation = new Animation<TextureRegion>(0.25f, KnightIdleFrames);
         stateTime = 0f;
-        ;
+
         TextureRegion[] KnightRunFrames = new TextureRegion[16];  // 16 frames total (8 from each
         int indexRUN = 0;
         for (int j = 0; j < 8; j++) { // 4 frames from the third row
@@ -150,93 +72,160 @@ public class Player {
             KnightRunFrames[indexRUN++] = tmp[3][j]; // Row index 3 for the fourth row
         }
         Runanimation = new Animation<TextureRegion>(0.1f, KnightRunFrames);
+    }
 
+    public void getReady(float positionX, float positionY) {
+        position.set(positionX, positionY);
+
+        changeState(IDLE);
+
+        stateTime = 0f;
+    }
+
+
+    public void setTiledMapHelper(TiledMapHelper tiledMapHelper) {
+        this.tiledMapHelper = tiledMapHelper;
+    }
+
+    private TextureRegion getCurrentFrame() {
+
+        switch (state) {
+            case RUN:
+                return Runanimation.getKeyFrame(stateTime, true);
+            case ATTACK:
+                return Attackanimation.getKeyFrame(stateTime, false);
+            case DEATH:
+                return DeathAnimation.getKeyFrame(stateTime, false);
+            case IDLE:
+                return IdleAnimation.getKeyFrame(stateTime, true);
+            default:
+                return IdleAnimation.getKeyFrame(stateTime, true);
+        }
+    }
+
+
+    public void render(SpriteBatch batch) {
+        TextureRegion currentFrame = getCurrentFrame(); // Get the current frame
+        player_rect.set(position.x, position.y, 32, 32); // Update player rectangle
+        batch.draw(getCurrentFrame(), position.x, position.y, player_rect.width, player_rect.height);
+    }
+
+
+    public void update(float deltaTime) {
+        stateTime += deltaTime;
+
+        float oldX = position.x;
+        float oldY = position.y;
+
+        position.x += velocity.x * deltaTime;
+        player_rect.setX(position.x);
+
+
+        player_rect.setX(position.x);
+        if (checkCollision()) {
+            position.x = oldX;
+            player_rect.setX(position.x);
+        }
+
+        position.y += velocity.y * deltaTime;
+        player_rect.setY(position.y);
+
+
+
+        position.y += velocity.y * deltaTime;
+        player_rect.setY(position.y);
+        if (velocity.x != 0 || velocity.y != 0) { // Check both x and y velocity
+            changeState(RUN);
+        } else {
+            changeState(IDLE);
+        }
 
     }
 
 
-    private void changeState(State newState){
+    public float getPositionX() {
+        return position.x;
+    }
+
+    public float getPositionY() {
+        return position.y;
+    }
+
+
+    private void changeState(State newState) {
         state = newState;
         stateTime = 0f;
     }
-    public State returnState(){
-        return state;
-    }
 
-    public void Attack(){
-        changeState(ATTACK);
-    }
-    public void StopAttack(){
-        changeState(IDLE);
-    }
+
+
     public void stop() {
-        movementDirection.set(0, 0);
-        setMovement(0, 0); // Call setMovement to trigger state change
-        //changeState(IDLE); // You can remove this line now
+        velocity.set(0, 0);
+
+        changeState(IDLE);
     }
 
     public void moveLeft() {
         System.out.println("Position before: " + position);
         position.x -= MOVEMENT_SPEED;
-        changeState(IDLE);
         System.out.println("Position after: " + position);
     }
 
     public void moveRight() {
         System.out.println("Position before: " + position);
         position.x += MOVEMENT_SPEED;
-        changeState(IDLE);
         System.out.println("Position after: " + position);
     }
 
     public void moveUp() {
         System.out.println("Position before: " + position);
         position.y += MOVEMENT_SPEED;
-        changeState(IDLE);
         System.out.println("Position after: " + position);
     }
 
     public void moveDown() {
         System.out.println("Position before: " + position);
         position.y -= MOVEMENT_SPEED;
-        changeState(IDLE);
         System.out.println("Position after: " + position);
     }
 
-    public void stopMovingX() {
-        movementDirection.x = 0;
-        changeState(IDLE);
 
+    public boolean checkCollision() {
+        if (tiledMap == null) return false;
+
+        int tileWidth = tiledMap.getProperties().get("tilewidth", Integer.class);
+        int tileHeight = tiledMap.getProperties().get("tileheight", Integer.class);
+
+        // Check collisions in 4 corners of player rectangle
+        boolean collision = checkCollisionAt(position.x, position.y, tileWidth, tileHeight) ||
+            checkCollisionAt(position.x + player_rect.width, position.y, tileWidth, tileHeight) ||
+            checkCollisionAt(position.x, position.y + player_rect.height, tileWidth, tileHeight) ||
+            checkCollisionAt(position.x + player_rect.width, position.y + player_rect.height, tileWidth, tileHeight);
+
+        if (collision) {
+            System.out.println("Collision detected!");
+        }
+
+        return collision;
     }
 
-    public void stopMovingY() {
-        movementDirection.y = 0;
-        changeState(IDLE);
+    private boolean checkCollisionAt(float x, float y, int tileWidth, int tileHeight) {
+        int tileX = (int) (x / tileWidth);
+        int tileY = (int) (y / tileHeight);
 
+        TiledMapTileLayer collisionLayer = (TiledMapTileLayer) tiledMap.getLayers().get("layer1"); // Replace "yourCollisionLayer" with the actual name
+        if (collisionLayer == null) return false;
+
+        TiledMapTileLayer.Cell tile = collisionLayer.getCell(tileX, tileY);
+        if (tile != null && tile.getTile() != null) {
+            if (tile.getTile().getProperties().containsKey("blocked")) {
+                System.out.println("Collision at: " + x + ", " + y);
+                return true;
+            }
+        }
+        return false;
     }
 
-    public void stopMovingLeft(){
-        if (movementDirection.x == -1){
-            setMovement(0, movementDirection.y);
-            changeState(IDLE);
-        }
-    }
-    public void stopMovingRight(){
-        if (movementDirection.x == 1){
-            setMovement(0, movementDirection.y);
-            changeState(IDLE);
-        }
-    }
-    public void stopMovingUp(){
-        if (movementDirection.y == 1){
-            setMovement(movementDirection.x, 0);
-            changeState(IDLE);
-        }
-    }
-    public void stopMovingDown(){
-        if (movementDirection.y == -1){
-            setMovement(movementDirection.x, 0);
-            changeState(IDLE);
-        }
-    }
 }
+
+

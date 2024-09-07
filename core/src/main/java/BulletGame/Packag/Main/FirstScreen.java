@@ -13,6 +13,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
@@ -47,6 +49,10 @@ public class FirstScreen implements Screen {
     private Controller controller;
     public static final float PPM = 100;
     Viewport viewport;
+    GameMap map;
+    TiledMap MapGame = new TiledMap();
+    private TiledMapTileLayer playerCollisionLayer;
+
 
 
     Skin skin = new Skin(Gdx.files.internal("ui/uiskin.json"), new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas")));
@@ -54,13 +60,18 @@ public class FirstScreen implements Screen {
 
     float stateTime;
 
-    Player player = new Player("Knight");
+    Player player = new Player("Knight", new TiledMapHelper());
 
     @Override
     public void show() {
         batch = new SpriteBatch();
         stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
         Gdx.input.setInputProcessor(stage);
+
+        map = new GameMap();
+
+
+        MapGame = new TiledMap();
 
         Table table = new Table();
         table.setFillParent(true);
@@ -73,7 +84,7 @@ public class FirstScreen implements Screen {
         camera.setToOrtho(false, 800, 450);
         pos = new Vector3(viewport.getScreenWidth(), viewport.getScreenHeight(), 0);
 
-        player.getReady(250, 250);
+
 
         controller = new Controller(stage);
 
@@ -94,7 +105,7 @@ public class FirstScreen implements Screen {
 
 
     }
-    public void handleInput(){
+    /*public void handleInput(){
         if (controller.isRightPressed())
             player.setMovement(player.MOVEMENT_SPEED, 0); // Move right
         else if (controller.isLeftPressed())
@@ -106,17 +117,17 @@ public class FirstScreen implements Screen {
         else {
             player.stop();
         }
-    }
+    }*/
 
-    public void update(float dt){
+    /*public void update(float dt){
         handleInput();
-    }
+    }*/
 
     @Override
     public void render(float delta) {
         //Vector2 vec = new Vector2(Gdx.input.getX(), Gdx.input.getY());
         //gameViewport.unproject(vec);
-        update(delta);
+        //update(delta);
         batch.begin();
         World world = new World(new Vector2(0, 0), false);
         Box2DDebugRenderer debugRenderer = new Box2DDebugRenderer();
@@ -138,6 +149,7 @@ public class FirstScreen implements Screen {
 
 
 
+
         debugRenderer.render(world, camera.combined);
 
 
@@ -148,15 +160,15 @@ public class FirstScreen implements Screen {
 
 
 
+
         camera.position.set(pos.x, pos.y, 0);
         //lighting code
 
 
 
-        player.render(batch);
-        player.update(delta);
-        libgdxLight.setOriginBasedPosition(player.getPositionX(), player.getPositionY());
-        libgdxLight.draw(batch);
+        //player.render(batch);
+        //player.update(delta);
+
 
         batch.end();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);

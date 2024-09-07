@@ -135,8 +135,6 @@ public class Controller {
             }
         });
         Gdx.input.setInputProcessor(stage);
-
-
         table.add();
         table.add(up).size(up.getWidth(), up.getHeight());
         table.add();
@@ -148,7 +146,6 @@ public class Controller {
         table.add();
         table.add(down).size(down.getWidth(), down.getHeight());
         table.add();
-
         stage.addActor(table);
     }
     public void draw(){
@@ -179,7 +176,5 @@ public class Controller {
     public void resize(int width, int height){
         viewport.update(width, height);
     }
-
-
 
 }
